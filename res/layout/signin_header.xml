@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="New Text"
+        android:id="@+id/landText"
+        android:layout_weight="1.5"
+        android:layout_marginLeft="8dp"
+        android:textSize="18sp"/>
+
+    <EditText
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/game_day"
+        android:id="@+id/editEvent"
+        android:layout_weight="1"
+        android:inputType="text"/>
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/spacer"
+        android:layout_weight="1"/>
+
+    <EditText
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="New EditText"
+        android:id="@+id/editDate"
+        android:layout_weight="1"
+        android:inputType="date"
+        android:focusable="false"
+        android:clickable="true"/>
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/spacer"
+        android:layout_weight="1"/>
+
+</LinearLayout>

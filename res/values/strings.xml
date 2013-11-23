@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">VirtualPM</string>
+    <string name="clear_signature">Clear</string>
+    <string name="submit_sheet">Submit</string>
+    <string name="add_sheet">Add sheet</string>
+    <string name="game_day">game day</string>
+    <string-array name="classes">
+        <item>Choose your class</item>
+        <item>Archer</item>
+        <item>Assassin</item>
+        <item>Barbarian</item>
+        <item>Bard</item>
+        <item>Druid</item>
+        <item>Healer</item>
+        <item>Monk</item>
+        <item>Scout</item>
+        <item>Warrior</item>
+        <item>Wizard</item>
+        <item>Color</item>
+        <item>Monster</item>
+        <item>Reeve</item>
+        <item>Undeclared</item>
+        <item>Anti-paladin</item>
+        <item>Paladin</item>
+    </string-array>
+</resources>
