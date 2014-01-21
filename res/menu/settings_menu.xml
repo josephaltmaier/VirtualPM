@@ -4,4 +4,10 @@
     <item
         android:id="@+id/add_sheet"
         android:title="@string/add_sheet"/>
+    <item
+        android:id="@+id/submit"
+        android:title="@string/submit"/>
+    <item
+        android:id="@+id/about"
+        android:title="@string/about"/>
 </menu>

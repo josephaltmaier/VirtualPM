@@ -3,11 +3,9 @@ package com.virtualpm.main.listitems;
 import android.content.Context;
 import android.graphics.*;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
-import android.widget.Button;
 
 /**
  * Created with IntelliJ IDEA.
@@ -24,6 +22,7 @@ public class SigninBoxItem extends SurfaceView implements View.OnClickListener {
     private Canvas  mCanvas;
     private Path mPath;
     private Paint mBitmapPaint;
+    private boolean signed = false;
 
     private Paint mPaint;
 
@@ -97,6 +96,7 @@ public class SigninBoxItem extends SurfaceView implements View.OnClickListener {
         mPath.lineTo(mX, mY);
         // commit the path to our offscreen
         mCanvas.drawPath(mPath, mPaint);
+        signed = true;
         // kill this so we don't double draw
         //mPath.reset();
     }
@@ -133,5 +133,12 @@ public class SigninBoxItem extends SurfaceView implements View.OnClickListener {
         mPath.reset();
         mCanvas.drawColor(Color.WHITE);
         invalidate();
+        signed = false;
+    }
+
+    public Bitmap getBitmap(){
+        if(!signed)
+            return null;
+        return getDrawingCache();
     }
 }

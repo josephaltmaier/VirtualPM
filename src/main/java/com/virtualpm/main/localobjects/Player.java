@@ -1,5 +1,9 @@
 package com.virtualpm.main.localobjects;
 
+import android.graphics.Bitmap;
+
+import java.io.Serializable;
+
 /**
  * Created with IntelliJ IDEA.
  * User: Joseph Altmaier
@@ -7,7 +11,7 @@ package com.virtualpm.main.localobjects;
  * Time: 9:47 PM
  * To change this template use File | Settings | File Templates.
  */
-public class Player implements Comparable<Player> {
+public class Player implements Comparable<Player>, Serializable {
     int playerId;
     int landId;
     int kingdomId;
@@ -17,10 +21,9 @@ public class Player implements Comparable<Player> {
     String kingdomName;
     boolean duesPaid;
     String amtClass;
+    Bitmap signature;
 
-    public Player(){
-        super();
-    }
+    public Player(){}
 
     public Player(int playerId, int landId, int kingdomId, String name, String persona, String landName, String kingdomName, boolean duesPaid, String amtClass) {
         this.playerId = playerId;
@@ -106,6 +109,13 @@ public class Player implements Comparable<Player> {
         this.amtClass = amtClass;
     }
 
+    public Bitmap getSignature() {
+        return signature;
+    }
+
+    public void setSignature(Bitmap signature) {
+        this.signature = signature;
+    }
 
     @Override
     public int compareTo(Player another) {

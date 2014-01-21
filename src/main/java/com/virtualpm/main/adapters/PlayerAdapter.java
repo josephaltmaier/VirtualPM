@@ -65,12 +65,12 @@ public class PlayerAdapter extends ArrayAdapter<Player> {
         return row;
     }
 
-    static class PlayerHolder{
-        TextView name;
-        TextView persona;
-        TextView duesPaid;
-        Spinner classSpinner;
-        SigninBoxItem signature;
-        Button signinButton;
+    public static class PlayerHolder{
+        public TextView name;
+        public TextView persona;
+        public TextView duesPaid;
+        public Spinner classSpinner;
+        public SigninBoxItem signature;
+        public Button signinButton;
     }
 }

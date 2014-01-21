@@ -1,24 +1,30 @@
 package com.virtualpm.main;
 
 import android.os.Bundle;
-import android.support.v4.app.*;
-import android.util.Log;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
-import com.virtualpm.main.adapters.PlayerAdapter;
-import com.virtualpm.main.localobjects.Player;
+import com.actionbarsherlock.view.MenuItem;
+import com.virtualpm.main.api.PMServerAPI;
+import com.virtualpm.main.dialogs.KingdomSelectorDialog;
+import com.virtualpm.main.dialogs.SubmitDialog;
+import com.virtualpm.main.listenerinterfaces.OnSheetCreatedListener;
+import com.virtualpm.main.localobjects.Kingdom;
+import com.virtualpm.main.localobjects.Land;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.UUID;
 
-public class VirtualPM extends SherlockFragmentActivity {
-    //private String[] navButtons;
-    //private DrawerLayout drawerLayout;
-    //private ListView drawerList;
-    private String[] kingdomNames = {"Burning Lands", "Iron Mountains", "Westmarch"};
-    private ArrayList<Player> playerList = new ArrayList<>();
-    PlayerAdapter playerAdapter;
+public class VirtualPM extends SherlockFragmentActivity implements OnSheetCreatedListener {
+    private static final String TAB_TAG = "TAB_TAG";
+
+    private Menu menu;
+
 
     //private FragmentTabHost tabHost;
     /**
@@ -27,39 +33,80 @@ public class VirtualPM extends SherlockFragmentActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        PMServerAPI.init(this);
 
         ActionBar bar = getSupportActionBar();
         bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
         bar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
         bar.setDisplayHomeAsUpEnabled(false);
         bar.setDisplayShowTitleEnabled(true);
-
-        bar.addTab(bar
-                .newTab()
-                .setText("Test")
-                .setTabListener(
-                        new TabListener<>(this, "tab1",
-                                SigninTab.class, null)));
-
-                //navButtons = getResources().getStringArray(R.array.nav_buttons);
-        //drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        //drawerList = (ListView) findViewById(R.id.left_drawer);
-
-        //drawerList.setAdapter(new ArrayAdapter<>(this, R.layout.drawer_list_item, navButtons));
-        //drawerList.setOnItemClickListener(new NavClickListener());
-
-        /*
-        ListView playerListView = (ListView)findViewById(R.id.listView);
-        playerAdapter = new PlayerAdapter(this, R.layout.signin_list_item, playerList);
-        playerListView.setAdapter(playerAdapter);
-        */
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu){
         MenuInflater inflater = getSupportMenuInflater();
         inflater.inflate(R.menu.settings_menu, menu);
+        menu.findItem(R.id.submit).setEnabled(false);
+        this.menu = menu;
         return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        PMServerAPI api = PMServerAPI.get();
+        FragmentManager manager = getSupportFragmentManager();
+        Bundle args;
+        switch (item.getItemId()) {
+            case R.id.add_sheet:
+                KingdomSelectorDialog ksd = new KingdomSelectorDialog();
+                args = new Bundle();
+                ArrayList<Kingdom> kingdoms = new ArrayList<>();
+                args.putSerializable(KingdomSelectorDialog.KINGDOMS, kingdoms);
+                ksd.setArguments(args);
+                manager.beginTransaction().add(ksd, KingdomSelectorDialog.TAG).addToBackStack(null).commit();
+                api.getKingdomsLater(ksd);
+                return true;
+            case R.id.submit:
+                ActionBar bar = getSupportActionBar();
+                ActionBar.Tab selectedTab = bar.getSelectedTab();
+                Bundle tabArgs = (Bundle)selectedTab.getTag();
+                String tabTag = tabArgs.getString(TAB_TAG);
+                SigninTab tab = (SigninTab) manager.findFragmentByTag(tabTag);
+                SubmitDialog sd = new SubmitDialog();
+                args = new Bundle();
+                args.putSerializable(SubmitDialog.SIGNIN_SHEET, tab.getLandForSubmit());
+                args.putSerializable(SubmitDialog.FRAGMENT_TAG, tabTag);
+                sd.setArguments(args);
+                manager.beginTransaction().add(sd, SubmitDialog.TAG).commit();
+                return true;
+            case R.id.about:
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    public Menu getMenu(){
+        return menu;
+    }
+
+    @Override
+    public void onSheetCreated(Land land) {
+        String tag = UUID.randomUUID().toString();
+        ActionBar bar = getSupportActionBar();
+        Bundle args = new Bundle();
+        args.putString(TAB_TAG, tag);
+        args.putSerializable(SigninTab.LAND, land);
+        bar.addTab(bar
+                .newTab()
+                .setText(land.getLandName())
+                .setTag(args)
+                .setTabListener(
+                        new TabListener<>(this, tag,
+                                SigninTab.class)));
+        bar.selectTab(bar.getTabAt(bar.getTabCount()-1));
+        menu.findItem(R.id.submit).setEnabled(true);
     }
 
     public class TabListener<T extends Fragment> implements
@@ -67,15 +114,12 @@ public class VirtualPM extends SherlockFragmentActivity {
         private final FragmentActivity mActivity;
         private final String mTag;
         private final Class<T> mClass;
-        private final Bundle mArgs;
         private Fragment mFragment;
 
-        public TabListener(FragmentActivity activity, String tag, Class<T> clz,
-                           Bundle args) {
+        public TabListener(FragmentActivity activity, String tag, Class<T> clz) {
             mActivity = activity;
             mTag = tag;
             mClass = clz;
-            mArgs = args;
             FragmentTransaction ft = mActivity.getSupportFragmentManager()
                     .beginTransaction();
 
@@ -92,50 +136,28 @@ public class VirtualPM extends SherlockFragmentActivity {
 
         @Override
         public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
-            ft = mActivity.getSupportFragmentManager()
-                    .beginTransaction();
 
             if (mFragment == null) {
                 mFragment = Fragment.instantiate(mActivity, mClass.getName(),
-                        mArgs);
+                        (Bundle)tab.getTag());
                 ft.add(android.R.id.content, mFragment, mTag);
-                ft.commit();
             } else {
-                ft.attach(mFragment);
-                ft.commit();
+                ft.show(mFragment);
             }
         }
 
         @Override
         public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
-            //To change body of implemented methods use File | Settings | File Templates.
+            if (mFragment != null) {
+                ft.hide(mFragment);
+            }
         }
 
         @Override
         public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
-            //To change body of implemented methods use File | Settings | File Templates.
+            if (mFragment != null) {
+                ft.show(mFragment);
+            }
         }
-    }
-
-    /*
-    private class NavClickListener implements ListView.OnItemClickListener {
-        @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            KingdomSelectorDialog ks = new KingdomSelectorDialog();
-            Bundle args = new Bundle();
-            args.putStringArray(KingdomSelectorDialog.KINGDOM_NAMES, kingdomNames);
-            ks.setArguments(args);
-            FragmentManager manager = getSupportFragmentManager();
-            manager.beginTransaction().add(ks, KingdomSelectorDialog.TAG).addToBackStack(null).commit();
-        }
-    } */
-
-    public void addSignInSheet(String kingdomName, String landName){
-        playerList.add(new Player(0, 0, 0, "Joseph Altmaier", "Ephriam A. Jostle", "Ashen Spire", "Westmarch", true, null));
-        playerList.add(new Player(1, 0, 0, "John Doe", "Bloodaxe the Decapitator", "Ashen Spire", "Westmarch", false, null));
-        playerList.add(new Player(2, 0, 0, "John Smith", "Axeblood the Recapitator", "Ashen Spire", "Westmarch", true, null));
-        Collections.sort(playerList);
-
-        playerAdapter.notifyDataSetChanged();
     }
 }

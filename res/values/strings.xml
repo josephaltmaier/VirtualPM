@@ -5,6 +5,9 @@
     <string name="submit_sheet">Submit</string>
     <string name="add_sheet">Add sheet</string>
     <string name="game_day">game day</string>
+    <string name="selectDate">Select sign-in date</string>
+    <string name="about">About</string>
+    <string name="submit">Submit</string>
     <string-array name="classes">
         <item>Choose your class</item>
         <item>Archer</item>

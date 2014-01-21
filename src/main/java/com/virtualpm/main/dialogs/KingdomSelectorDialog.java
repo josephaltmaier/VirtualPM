@@ -10,6 +10,9 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import com.virtualpm.main.R;
+import com.virtualpm.main.api.PMServerAPI;
+import com.virtualpm.main.listenerinterfaces.KingdomsListener;
+import com.virtualpm.main.localobjects.Kingdom;
 
 import java.util.*;
 
@@ -20,10 +23,11 @@ import java.util.*;
  * Time: 6:41 PM
  * To change this template use File | Settings | File Templates.
  */
-public class KingdomSelectorDialog extends DialogFragment {
-    public static final String KINGDOM_NAMES = "KINGDOM_NAMES";
+public class KingdomSelectorDialog extends DialogFragment implements ListView.OnItemClickListener, KingdomsListener {
+    public static final String KINGDOMS = "KINGDOMS";
     public static final String TAG = "KingdomSelectorDialog";
-    List<Map<String, String>> kingdomNames = new ArrayList<>();
+    private static final String KINGDOM = "KINGDOM";
+    List<Map<String, Object>> kingdomNames = new ArrayList<>();
     SimpleAdapter kNameAdapter;
     String[] landNames = {"Ashen Spire", "Thor's Refuge", "Wavehaven"};
 
@@ -40,30 +44,42 @@ public class KingdomSelectorDialog extends DialogFragment {
         ListView kingdomList = (ListView)v.findViewById(R.id.listView);
         kNameAdapter = new SimpleAdapter(v.getContext(), kingdomNames, R.layout.list_button_layout, new String[]{"name"}, new int[]{R.id.button});
         kingdomList.setAdapter(kNameAdapter);
-        setKingdomNames(getArguments().getStringArray(KINGDOM_NAMES));
-        kingdomList.setOnItemClickListener(new KingdomClickListener());
+        List<Kingdom> kingdomArgList = (List<Kingdom>)getArguments().get(KINGDOMS);
+        setKingdomNames(kingdomArgList);
+        kingdomList.setOnItemClickListener(this);
         return v;
     }
 
-    public void setKingdomNames(String[] kNameArray){
-        for(String name : kNameArray){
-            Map<String, String> map = new HashMap<>();
-            map.put("name", name);
+    public void setKingdomNames(Collection<Kingdom> kingdomCollection){
+        for(Kingdom k : kingdomCollection){
+            Map<String, Object> map = new HashMap<>();
+            map.put("name", k.getKingdomName());
+            map.put(KINGDOM, k);
             kingdomNames.add(map);
         }
         kNameAdapter.notifyDataSetChanged();
     }
 
-    private class KingdomClickListener implements ListView.OnItemClickListener {
-        @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            LandSelectorDialog ls = new LandSelectorDialog();
-            Bundle args = new Bundle();
-            args.putStringArray(LandSelectorDialog.LAND_NAMES, landNames);
-            args.putString(LandSelectorDialog.KINGDOM_NAME, ((HashMap<String, String>)parent.getItemAtPosition(position)).get("name"));
-            ls.setArguments(args);
-            FragmentManager manager = getFragmentManager();
-            manager.beginTransaction().add(ls, LandSelectorDialog.TAG).addToBackStack(null).commit();
-        }
+    @Override
+    public void setKingdoms(Collection<Kingdom> kingdoms) {
+        setKingdomNames(kingdoms);
+    }
+
+    @Override
+    public void kingdomsError() {
+
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        LandSelectorDialog ls = new LandSelectorDialog();
+        Bundle args = new Bundle();
+        PMServerAPI api = PMServerAPI.get();
+        Kingdom kingdom = (Kingdom)((HashMap<String, Object>)parent.getItemAtPosition(position)).get(KINGDOM);
+        args.putSerializable(LandSelectorDialog.LANDS, new ArrayList<>());
+        ls.setArguments(args);
+        FragmentManager manager = getFragmentManager();
+        manager.beginTransaction().addToBackStack(null).add(ls, LandSelectorDialog.TAG).commit();
+        api.getLandsLater(kingdom.getKingdomId(), ls);
     }
 }

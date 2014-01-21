@@ -7,15 +7,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import com.virtualpm.main.R;
+import com.virtualpm.main.listenerinterfaces.LandsListener;
+import com.virtualpm.main.listenerinterfaces.OnSheetCreatedListener;
+import com.virtualpm.main.localobjects.Land;
+import com.virtualpm.main.localobjects.Player;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -24,12 +24,13 @@ import java.util.Map;
  * Time: 6:41 PM
  * To change this template use File | Settings | File Templates.
  */
-public class LandSelectorDialog extends DialogFragment {
-    public static final String LAND_NAMES = "LAND_NAMES";
+public class LandSelectorDialog extends DialogFragment implements ListView.OnItemClickListener, LandsListener {
     public static final String KINGDOM_NAME = "KINGDOM_NAME";
     public static final String TAG = "LandSelectorDialog";
+    public static final String LANDS = "LANDS";
+    private static final String LAND = "LAND";
     private SimpleAdapter lNameAdapter;
-    private List<Map<String, String>> landNames = new ArrayList<>();
+    private List<Map<String, Object>> landNames = new ArrayList<>();
 
     @Override
     public void onCreate(Bundle savedInstanceState){
@@ -44,27 +45,34 @@ public class LandSelectorDialog extends DialogFragment {
         ListView landList = (ListView)v.findViewById(R.id.listView);
         lNameAdapter = new SimpleAdapter(v.getContext(), landNames, R.layout.list_button_layout, new String[]{"name"}, new int[]{R.id.button});
         landList.setAdapter(lNameAdapter);
-        setLandNames(getArguments().getStringArray(LAND_NAMES));
-        landList.setOnItemClickListener(new LandClickListener());
+        List<Land> landArgList = (List<Land>)getArguments().get(LANDS);
+        setLands(landArgList);
+        landList.setOnItemClickListener(this);
         return v;
     }
 
-    public void setLandNames(String[] kNameArray){
-        for(String name : kNameArray){
-            Map<String, String> map = new HashMap<>();
-            map.put("name", name);
+    @Override
+    public void setLands(Collection<Land> landCollection){
+        for(Land l : landCollection){
+            Map<String, Object> map = new HashMap<>();
+            map.put("name", l.getLandName());
+            map.put(LAND, l);
             landNames.add(map);
         }
         lNameAdapter.notifyDataSetChanged();
     }
 
-    private class LandClickListener implements ListView.OnItemClickListener {
-        @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            HashMap<String, String> clicked = (HashMap<String, String>)parent.getItemAtPosition(position);
-            /*VirtualPM mainActivity = (VirtualPM)getActivity();
-            mainActivity.addSignInSheet(getArguments().getString(KINGDOM_NAME), clicked.get("name").toString());
-            getFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);*/
-        }
+    @Override
+    public void landsError() {
+
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        OnSheetCreatedListener activity = (OnSheetCreatedListener)getActivity();
+        Land land = (Land)((HashMap<String, Object>)parent.getItemAtPosition(position)).get(LAND);
+        land.setPlayers(new ArrayList<Player>());
+        activity.onSheetCreated(land);
+        getFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
     }
 }
